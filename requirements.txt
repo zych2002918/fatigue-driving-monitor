@@ -1,0 +1,8 @@
+# 核心运行依赖（PC 复现）
+numpy>=1.24
+opencv-python>=4.6
+dlib>=19.22
+wxPython>=4.2
+
+# 可选：语音播报（WinsoundAlarmer use_tts=True）
+# pyttsx3>=2.90
