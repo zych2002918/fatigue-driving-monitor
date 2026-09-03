@@ -36,6 +36,10 @@ python -m venv .venv
 # Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
 
+#   注：Windows + Python 3.11 下 dlib 无官方 cp311 wheel，requirements
+#   自动使用 dlib-bin（预编译）；若 dlib-bin 不可用，也可直接:
+#   pip install dlib-bin
+
 # 2. 下载 68 点人脸模型（~100MB）放入 models/
 #    http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
 #    （解压得到 shape_predictor_68_face_landmarks.dat）
