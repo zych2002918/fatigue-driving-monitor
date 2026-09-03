@@ -8,3 +8,6 @@ wxPython>=4.2
 
 # 可选：语音播报（WinsoundAlarmer use_tts=True）
 # pyttsx3>=2.90
+
+# 可选：重新生成 README 架构图（scripts/make_arch_diagram.py）
+# matplotlib>=3.5
