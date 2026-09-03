@@ -127,10 +127,10 @@ class FatigueFrame(wx.Frame):
         top.Add(self.btn_stop, 0, wx.ALL, 6)
         sz.Add(top, 0, wx.EXPAND)
 
-        # 视频预览
+        # 视频预览（父控件必须是 wxStaticBox 本身）
         self.video_box = wx.StaticBox(pnl, label="实时视频")
         vbs = wx.StaticBoxSizer(self.video_box, wx.VERTICAL)
-        self.preview = wx.StaticBitmap(pnl, size=(960, 480))
+        self.preview = wx.StaticBitmap(self.video_box, size=(960, 480))
         vbs.Add(self.preview, 1, wx.EXPAND | wx.ALL, 6)
         sz.Add(vbs, 1, wx.EXPAND | wx.ALL, 6)
 

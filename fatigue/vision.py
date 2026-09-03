@@ -13,8 +13,15 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
-import cv2
-import numpy as np
+# cv2/numpy 缺失时视觉通道降级（行为通道/演示仍可运行）
+try:
+    import cv2
+    import numpy as np
+    _CV2_OK = True
+except Exception:  # pragma: no cover
+    cv2 = None  # type: ignore
+    np = None  # type: ignore
+    _CV2_OK = False
 
 from .config import FatigueConfig
 from .features import (
@@ -123,11 +130,14 @@ class VisionAnalyzer:
         return _DLIB_OK
 
     # ------------------------------------------------------------------
-    def analyze_frame(self, frame_bgr: np.ndarray) -> FrameMetrics:
-        """对一帧 BGR 图像执行完整分析，返回 FrameMetrics。"""
+    def analyze_frame(self, frame_bgr) -> FrameMetrics:
+        """对一帧 BGR 图像执行完整分析，返回 FrameMetrics。
+
+        cv2/dlib 缺失或模型未加载时返回空指标（降级不崩溃）。
+        """
         t0 = time.time()
         m = FrameMetrics(timestamp=t0)
-        if frame_bgr is None:
+        if not _CV2_OK or not _DLIB_OK or frame_bgr is None:
             return m
         gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
         gray = cv2.equalizeHist(gray)  # 论文：自适应直方图均衡化预处理

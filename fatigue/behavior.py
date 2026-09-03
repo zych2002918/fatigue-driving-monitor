@@ -16,6 +16,8 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+from .config import FatigueConfig, STEER_ANGLE_EPS_DEG
+
 
 @dataclass
 class BehaviorSample:
@@ -175,7 +177,7 @@ class BehaviorAnalyzer:
             else:
                 angle_changed = (
                     abs(s.steer_angle_deg - self._last_sample.steer_angle_deg)
-                    > self.cfg.STEER_ANGLE_EPS_DEG
+                    > STEER_ANGLE_EPS_DEG
                 )
             self._last_sample = s
 

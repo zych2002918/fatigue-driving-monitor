@@ -35,6 +35,8 @@ class FusionStatus:
     mar: float = 0.0
     pitch: float = 0.0
     fps: float = 0.0
+    #: 行为通道报警等级（由 set_behavior_state 注入）
+    _behavior_alarm: int = ALARM_NONE
 
 
 class FusionEngine:
@@ -51,7 +53,6 @@ class FusionEngine:
         self.on_alarm = on_alarm or (lambda lvl, reason: None)
         self._lock = threading.Lock()
         self._status = FusionStatus(timestamp=time.time())
-        self._status._behavior_alarm = 0  # 由 set_behavior_state 更新
         # 融合触发历史
         self._alarm_log: List[dict] = []
         self._last_vision_ts = 0.0

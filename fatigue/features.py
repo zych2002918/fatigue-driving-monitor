@@ -14,15 +14,14 @@ from typing import List, Sequence, Tuple
 # 左右眼与嘴部在 68 点（iBUG）模型中的索引（dlib face_utils 标准编号）
 LEFT_EYE_IDX: Tuple[int, ...] = (36, 37, 38, 39, 40, 41)
 RIGHT_EYE_IDX: Tuple[int, ...] = (42, 43, 44, 45, 46, 47)
-MOUTH_IDX: Tuple[int, ...] = (48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59)
+
+# 嘴部关键索引（68 点 iBUG 外唇）：上唇中 51、下唇中 57、左嘴角 48、右嘴角 54
+MOUTH_PTS: Tuple[int, ...] = (51, 57, 48, 54)
 
 # 论文 4.2.1 中 EAR/MAR 公式所用的 6 点取法：
 # EAR: P1..P6 = 眼角点序列，竖直两点为 P2,P6 与 P3,P5
 EAR_VERT_A = (1, 5)   # 左眼: 38,42 / 右眼: 44,46 的通用局部索引
 EAR_VERT_B = (2, 4)
-# MAR 竖直两点为 P1,P5 与 P2,P4（嘴部 48..53 内侧 6 点取法）
-MAR_VERT_A = (0, 4)
-MAR_VERT_B = (1, 3)
 
 Point = Tuple[float, float]
 
@@ -46,18 +45,24 @@ def eye_aspect_ratio(eye_pts: Sequence[Point]) -> float:
     return num / denom
 
 
-def mouth_aspect_ratio(mouth_pts: Sequence[Point]) -> float:
-    """式 4-2：MAR = (|P1-P5| + |P2-P4|) / (2*|P3-P6|)。
+def mouth_aspect_ratio(points: Sequence[Point]) -> float:
+    """MAR（嘴部纵横比，论文式 4-2 的几何等价实现）。
 
-    采用论文定义的嘴部内侧 6 点（48,49,50,51,52,53）。
+    论文式 4-2 以 6 个嘴部关键点定义纵横比，但图 4-4 未公开索引表。
+    为保证物理语义正确（嘴张 -> MAR 增大；闭合 -> MAR -> 0），
+    这里直接用外唇几何量：
+        MAR = 上下唇竖直间距(|上唇中-下唇中|) / 嘴角水平宽度
+    调用方需传入 68 点全集，或预提取 [上唇中, 下唇中, 左嘴角, 右嘴角]。
     """
-    if len(mouth_pts) < 6:
+    if len(points) < 4:
         return 0.0
-    denom = 2.0 * _euclid(mouth_pts[2], mouth_pts[5])
-    if denom <= 1e-9:
+    # points = (top_lip, bottom_lip, left_corner, right_corner)
+    top, bottom, left, right = points[0], points[1], points[2], points[3]
+    width = _euclid(left, right)
+    if width <= 1e-9:
         return 0.0
-    num = _euclid(mouth_pts[0], mouth_pts[4]) + _euclid(mouth_pts[1], mouth_pts[3])
-    return num / denom
+    height = _euclid(top, bottom)
+    return height / width
 
 
 def shape_to_points(shape) -> List[Point]:
@@ -90,8 +95,11 @@ def estimate_head_pose(points: Sequence[Point], camera_matrix=None, dist_coeffs=
 
     返回 (yaw_deg, pitch_deg, roll_deg)；关键点不足或求解失败返回 None。
     """
-    import cv2
-    import numpy as np
+    try:
+        import cv2
+        import numpy as np
+    except Exception:  # pragma: no cover
+        return None
 
     if len(points) < 55:
         return None
@@ -130,9 +138,9 @@ def extract_eye_mar(points: Sequence[Point]):
         return None
     left = [points[i] for i in LEFT_EYE_IDX]
     right = [points[i] for i in RIGHT_EYE_IDX]
-    # 嘴部取内侧 6 点：48..53（与论文式 4-2 对应）
-    mouth_inner = [points[i] for i in MOUTH_IDX[:6]]
+    # 嘴部 4 点：上唇中 51 / 下唇中 57 / 左嘴角 48 / 右嘴角 54
+    mouth_geo = [points[i] for i in MOUTH_PTS]
     ear_l = eye_aspect_ratio(left)
     ear_r = eye_aspect_ratio(right)
-    mar = mouth_aspect_ratio(mouth_inner)
+    mar = mouth_aspect_ratio(mouth_geo)
     return ear_l, ear_r, (ear_l + ear_r) / 2.0, mar

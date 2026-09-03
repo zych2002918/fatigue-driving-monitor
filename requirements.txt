@@ -1,7 +1,9 @@
 # 核心运行依赖（PC 复现）
 numpy>=1.24
 opencv-python>=4.6
-dlib>=19.22
+# Windows 上 dlib 无 cp311 官方 wheel，用 dlib-bin 预编译；Linux/mac 可直接 dlib
+dlib-bin>=19.22; sys_platform == "win32"
+dlib>=19.22; sys_platform != "win32"
 wxPython>=4.2
 
 # 可选：语音播报（WinsoundAlarmer use_tts=True）
